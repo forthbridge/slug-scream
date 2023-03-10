@@ -30,17 +30,19 @@ namespace SlugScream
             PlayerEx playerEx;
             if (!PlayerData.TryGetValue(self.player, out playerEx)) return;
 
-            playerEx.screamSound.Update();
-         
             if (!playerEx.isScreaming) return;
 
             float time = playerEx.screamCounter / 40.0f;
 
             NoteProperties? currentNote = null;
 
-            for (int i = NOTES.Count - 1; i > 0; i--)
+            for (int i = NOTES.Count - 1; i > -1; i--)
             {
-                if (i <= -1) playerEx.screamCounter = 0;
+                if (i <= -1)
+                {
+                    playerEx.screamCounter = 0;
+                    time = playerEx.screamCounter / 40.0f;
+                }
 
                 NoteProperties noteProperty = NOTES[i];
                 currentNote = noteProperty;
@@ -82,20 +84,21 @@ namespace SlugScream
         private static void RainWorld_OnModsDisabled(On.RainWorld.orig_OnModsDisabled orig, RainWorld self, ModManager.Mod[] newlyDisabledMods) => Enums.UnregisterValues();
 
         private const int FRAMERATE = 40;
-        private const float SCREAM_FRAME_TIMEOUT = 0;
+        private const float SCREAM_FRAME_TIMEOUT = 3.0f * FRAMERATE;
 
 
         private static ConditionalWeakTable<Player, PlayerEx> PlayerData = new ConditionalWeakTable<Player, PlayerEx>();
 
         private class PlayerEx
         {
-            public readonly ChunkDynamicSoundLoop screamSound;
+            public StaticSoundLoop screamSound = null!;
 
             public PlayerEx(Player player)
             {
-                screamSound = new ChunkDynamicSoundLoop(player.firstChunk);
-                screamSound.sound = Enums.Sounds.SlugScream;
+                ResetScreamSound(player);
             }
+
+            public void ResetScreamSound(Player player) => screamSound = new StaticSoundLoop(Enums.Sounds.SlugScream, player.bodyChunks[0].pos, player.room, 1.0f, 0.0f);
 
             public bool wantsToScream = false;
             public bool isScreaming = false;
@@ -125,31 +128,42 @@ namespace SlugScream
             {
                 if (!playerEx.isScreaming)
                 {
+                    playerEx.isScreaming = true;
+                 
                     playerEx.screamCounter = playerEx.savedScreamCounter;
+                    playerEx.screamTimeoutCounter = 0;
+
+                    playerEx.screamSound.pitch = 1.0f;
                 }
 
-                playerEx.isScreaming = true;
-                playerEx.screamSound.Volume = 1.0f;
-
-                playerEx.screamTimeoutCounter = 0;
                 playerEx.screamCounter++;
                 playerEx.savedScreamCounter = playerEx.screamCounter;
             }
             else
             {
-                playerEx.screamCounter = 0;
-                playerEx.isScreaming = false;
-                playerEx.screamSound.Volume = 0.001f;
-               
+                if (playerEx.isScreaming)
+                {
+                    playerEx.isScreaming = false;
+                    
+                    playerEx.screamCounter = 0;
+
+                    //playerEx.screamSound.pitch = 0.0f;
+                }
+
                 if (playerEx.screamTimeoutCounter > SCREAM_FRAME_TIMEOUT)
                 {
                     playerEx.savedScreamCounter = 0;
+                    // playerEx.ResetScreamSound(self);
                 }
                 else
                 {
                     playerEx.screamTimeoutCounter++;
                 }
             }
+
+            playerEx.screamSound.Update();
+            playerEx.screamSound.pos = self.bodyChunks[0].pos;
+            playerEx.screamSound.room = self.room;
         }
 
         private static void HandlePlayerInput(Player player, KeyCode keyCode, int targetPlayerIndex)
@@ -161,31 +175,22 @@ namespace SlugScream
             playerEx.wantsToScream = Input.GetKey(keyCode) || (targetPlayerIndex == 0 && Input.GetKey(Options.keybindKeyboard.Value));
         }
 
-        private static void StartScreaming()
-        {
-
-        }
-
-        private static void StopScreaming()
-        {
-
-        }
-
         private static readonly List<NoteProperties> NOTES = new List<NoteProperties>()
         {
             new NoteProperties(0.0f, Note.MEDIUM),
             new NoteProperties(7.0f, Note.HIGH),
-            new NoteProperties(10.0f, Note.MEDIUM),
-            new NoteProperties(20.0f, Note.LOW),
-            new NoteProperties(30.0f, Note.VERY_LOW),
-            new NoteProperties(40.0f, Note.MEDIUM),
-            new NoteProperties(50.0f, Note.HIGH),
-            new NoteProperties(60.0f, Note.MEDIUM),
-            new NoteProperties(70.0f, Note.VERY_HIGH),
-            new NoteProperties(80.0f, Note.HIGH),
-            new NoteProperties(90.0f, Note.VERY_HIGH),
-            new NoteProperties(100.0f, Note.HIGH),
-            new NoteProperties(110.0f, Note.MEDIUM),
+            new NoteProperties(7.8f, Note.MEDIUM),
+            new NoteProperties(12.0f, Note.LOW),
+            new NoteProperties(16.0f, Note.VERY_LOW),
+            new NoteProperties(31.5f, Note.MEDIUM),
+            new NoteProperties(39.0f, Note.HIGH),
+            new NoteProperties(39.8f, Note.MEDIUM),
+            new NoteProperties(44.0f, Note.VERY_HIGH),
+            new NoteProperties(48.0f, Note.HIGH),
+            new NoteProperties(55.0f, Note.VERY_HIGH),
+            new NoteProperties(55.8f, Note.HIGH),
+            new NoteProperties(59.0f, Note.MEDIUM),
+            new NoteProperties(61.0f, Note.MEDIUM),
         };
 
         class NoteProperties
