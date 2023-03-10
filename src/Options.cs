@@ -13,19 +13,19 @@ namespace SlugScream
 
         #region Options
 
-        public static Configurable<KeyCode> screamKeybindKeyboard = instance.config.Bind("screamKeybindKeyboard", KeyCode.LeftAlt, new ConfigurableInfo(
+        public static Configurable<KeyCode> keybindKeyboard = instance.config.Bind("keybindKeyboard", KeyCode.LeftAlt, new ConfigurableInfo(
             "Keybind to trigger the scream for Keyboard.", null, "", "Keyboard"));
 
-        public static Configurable<KeyCode> screamKeybindPlayer1 = instance.config.Bind("screamKeybindPlayer1", KeyCode.Joystick1Button4, new ConfigurableInfo(
+        public static Configurable<KeyCode> keybindPlayer1 = instance.config.Bind("keybindPlayer1", KeyCode.Joystick1Button4, new ConfigurableInfo(
             "Keybind to trigger the scream for Player 1.", null, "", "Player 1"));
 
-        public static Configurable<KeyCode> screamKeybindPlayer2 = instance.config.Bind("screamKeybindPlayer2", KeyCode.Joystick2Button4, new ConfigurableInfo(
-            "Keybind to trigger the scream for Player 2.", null, "", "Player 2"));
+        public static Configurable<KeyCode> keybindPlayer2 = instance.config.Bind("keybindPlayer2", KeyCode.Joystick2Button4, new ConfigurableInfo(
+            "Keybind to trigger the scream  for Player 2.", null, "", "Player 2"));
 
-        public static Configurable<KeyCode> screamKeybindPlayer3 = instance.config.Bind("screamKeybindPlayer3", KeyCode.Joystick3Button4, new ConfigurableInfo(
+        public static Configurable<KeyCode> keybindPlayer3 = instance.config.Bind("keybindPlayer3", KeyCode.Joystick3Button4, new ConfigurableInfo(
             "Keybind to trigger the scream for Player 3.", null, "", "Player 3"));
 
-        public static Configurable<KeyCode> screamKeybindPlayer4 = instance.config.Bind("screamKeybindPlayer4", KeyCode.Joystick4Button4, new ConfigurableInfo(
+        public static Configurable<KeyCode> keybindPlayer4 = instance.config.Bind("keybindPlayer4", KeyCode.Joystick4Button4, new ConfigurableInfo(
             "Keybind to trigger the scream for Player 4.", null, "", "Player 4"));
 
         public static Configurable<bool> fearScream = instance.config.Bind("fearScream", true, new ConfigurableInfo(
@@ -85,13 +85,23 @@ namespace SlugScream
 
             AddTab(ref tabIndex, "Input");
 
-            DrawKeybinders(screamKeybindKeyboard, ref Tabs[tabIndex]);
-            DrawKeybinders(screamKeybindPlayer1, ref Tabs[tabIndex]);
-            DrawKeybinders(screamKeybindPlayer2, ref Tabs[tabIndex]);
-            DrawKeybinders(screamKeybindPlayer3, ref Tabs[tabIndex]);
-            DrawKeybinders(screamKeybindPlayer4, ref Tabs[tabIndex]);
+            AddNewLine(3);
 
-            AddNewLine(18);
+            DrawKeybinders(keybindKeyboard, ref Tabs[tabIndex]);
+            AddNewLine(1);
+
+            DrawKeybinders(keybindPlayer1, ref Tabs[tabIndex]);
+            AddNewLine(1);
+
+            DrawKeybinders(keybindPlayer2, ref Tabs[tabIndex]);
+            AddNewLine(1);
+
+            DrawKeybinders(keybindPlayer3, ref Tabs[tabIndex]);
+            AddNewLine(1);
+
+            DrawKeybinders(keybindPlayer4, ref Tabs[tabIndex]);
+
+            AddNewLine(4);
             DrawBox(ref Tabs[tabIndex]);
         }
 
