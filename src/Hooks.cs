@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using Noise;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -21,6 +22,21 @@ namespace SlugScream
 
             On.Player.Update += Player_Update;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
+        }
+
+        private static bool isInit = false;
+
+        private static void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
+        {
+            orig(self);
+
+            if (isInit) return;
+            isInit = true;
+
+            Enums.RegisterValues();
+            MachineConnector.SetRegisteredOI(Plugin.MOD_ID, Options.instance);
+
+            ResourceLoader.LoadSprites();
         }
 
         private static void PlayerGraphics_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
@@ -56,6 +72,42 @@ namespace SlugScream
             if (face != null) SetFaceSprite(sLeaser, face);
         }
 
+        private static string? GetFace(PlayerGraphics self, Note note)
+        {
+            if (note == Note.NONE) return null;
+
+            SlugcatStats.Name name = self.player.SlugCatClass;
+            string face = "default";
+
+            if (self.player.dead)
+            {
+                face = "dead";
+            }
+            else if (name == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Artificer)
+            {
+                face = "artificer";
+            }
+            else if (name == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Saint)
+            {
+                face = "saint";
+            }
+
+            string suffix = note switch
+            {
+                Note.VERY_LOW => "verylow",
+                Note.LOW => "low",
+                Note.MEDIUM => "medium",
+                Note.HIGH => "high",
+                Note.VERY_HIGH => "veryhigh",
+
+                _ => ""
+            };
+
+            face += "_" + suffix;
+
+            return Plugin.MOD_ID + "_" + face;
+        }
+
         private static void SetFaceSprite(RoomCamera.SpriteLeaser sLeaser, string spriteName)
         {
             if (!Futile.atlasManager.DoesContainElementWithName(spriteName))
@@ -66,20 +118,7 @@ namespace SlugScream
             sLeaser.sprites[9].element = Futile.atlasManager.GetElementWithName(spriteName);
         }
 
-        private static bool isInit = false;
 
-        private static void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
-        {
-            orig(self);
-
-            if (isInit) return;
-            isInit = true;
-
-            Enums.RegisterValues();
-            MachineConnector.SetRegisteredOI(Plugin.MOD_ID, Options.instance);
-
-            ResourceLoader.LoadSprites();
-        }
 
         private static void RainWorld_OnModsDisabled(On.RainWorld.orig_OnModsDisabled orig, RainWorld self, ModManager.Mod[] newlyDisabledMods) => Enums.UnregisterValues();
 
@@ -92,6 +131,8 @@ namespace SlugScream
         private class PlayerEx
         {
             public StaticSoundLoop screamSound = null!;
+
+            public FirecrackerPlant.ScareObject? scareObject = null;
 
             public PlayerEx(Player player)
             {
@@ -138,6 +179,8 @@ namespace SlugScream
 
                 playerEx.screamCounter++;
                 playerEx.savedScreamCounter = playerEx.screamCounter;
+
+                CreateFear(self, playerEx);
             }
             else
             {
@@ -147,23 +190,42 @@ namespace SlugScream
                     
                     playerEx.screamCounter = 0;
 
-                    //playerEx.screamSound.pitch = 0.0f;
+                    playerEx.screamSound.pitch = 0.0f;
                 }
 
                 if (playerEx.screamTimeoutCounter > SCREAM_FRAME_TIMEOUT)
                 {
                     playerEx.savedScreamCounter = 0;
-                    // playerEx.ResetScreamSound(self);
+                    playerEx.ResetScreamSound(self);
                 }
                 else
                 {
                     playerEx.screamTimeoutCounter++;
                 }
+
             }
 
-            playerEx.screamSound.Update();
+            if (self.room != null) playerEx.screamSound.room = self.room;
+
             playerEx.screamSound.pos = self.bodyChunks[0].pos;
-            playerEx.screamSound.room = self.room;
+            playerEx.screamSound.Update();
+        }
+
+        // Thanks Singularity Bomb!
+        private static void CreateFear(Player player, PlayerEx playerEx)
+        {
+            if (playerEx.scareObject != null)
+            {
+                playerEx.scareObject.pos = player.firstChunk.pos;
+                return;
+            }
+
+            playerEx.scareObject = new FirecrackerPlant.ScareObject(player.firstChunk.pos);
+            playerEx.scareObject.fearRange = 8000f;
+            playerEx.scareObject.fearScavs = true;
+
+            player.room.AddObject(playerEx.scareObject);
+            playerEx.scareObject.lifeTime = -10;
         }
 
         private static void HandlePlayerInput(Player player, KeyCode keyCode, int targetPlayerIndex)
@@ -215,40 +277,5 @@ namespace SlugScream
             VERY_HIGH
         }
 
-        private static string? GetFace(PlayerGraphics self, Note note)
-        {
-            if (note == Note.NONE) return null;
-
-            SlugcatStats.Name name = self.player.SlugCatClass;
-            string face = "default";
-
-            if (self.player.dead)
-            {
-                face = "dead";
-            }
-            else if (name == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Artificer)
-            {
-                face = "artificer";
-            }
-            else if (name == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Saint)
-            {
-                face = "saint";
-            }
-
-            string suffix = note switch
-            {
-                Note.VERY_LOW => "verylow",
-                Note.LOW => "low",
-                Note.MEDIUM => "medium",
-                Note.HIGH => "high",
-                Note.VERY_HIGH => "veryhigh",
-
-                _ => ""
-            };
-
-            face += "_" + suffix;
-
-            return Plugin.MOD_ID + "_" + face;
-        }
     }
 }

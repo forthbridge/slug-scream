@@ -28,8 +28,13 @@ namespace SlugScream
         public static Configurable<KeyCode> keybindPlayer4 = instance.config.Bind("keybindPlayer4", KeyCode.Joystick4Button4, new ConfigurableInfo(
             "Keybind to trigger the scream for Player 4.", null, "", "Player 4"));
 
+
+        public static Configurable<bool> screamReducesStealth = instance.config.Bind("screamReducesStealth", true, new ConfigurableInfo(
+            "When checked, stealth is significantly reduced when screaming, making creatures more likely to notice you!.",
+            null, "", "Scream Reduces Stealth?"));
+
         public static Configurable<bool> fearScream = instance.config.Bind("fearScream", true, new ConfigurableInfo(
-            "When checked, almost every creature fears and flees the source of the scream.",
+            "When checked, almost every creature fears and flees the source of the scream. Priority over Scream Attracts?",
             null, "", "Creatures Fear Scream?"));
 
 
@@ -76,6 +81,7 @@ namespace SlugScream
             AddTab(ref tabIndex, "General");
 
             AddCheckBox(fearScream, (string)fearScream.info.Tags[0]);
+            AddCheckBox(screamReducesStealth, (string)screamReducesStealth.info.Tags[0]);
             DrawCheckBoxes(ref Tabs[tabIndex]);
 
             AddNewLine(18);

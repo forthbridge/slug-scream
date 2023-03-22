@@ -23,7 +23,7 @@
 
             public static void UnregisterValues()
             {
-                if (SlugScream != null) SlugScream = null;
+                SlugScream?.Unregister();
             }
         }
     }
